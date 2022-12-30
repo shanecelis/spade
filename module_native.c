@@ -647,6 +647,21 @@ JERRYXX_FUN(native_text_add_fn) {
   return jerry_create_undefined();
 }
 
+JERRYXX_FUN(native_set_color_fn) {
+
+  dbg("module_native::native_set_color_fn");
+  jerry_value_t color_val = JERRYXX_GET_ARG(0);
+
+  set_color(
+    jerry_value_to_char(color_val),
+    JERRYXX_GET_ARG_NUMBER(1),
+    JERRYXX_GET_ARG_NUMBER(2),
+    JERRYXX_GET_ARG_NUMBER(3)
+  );
+
+  return jerry_create_undefined();
+}
+
 JERRYXX_FUN(native_text_clear_fn) { 
   dbg("module_native::native_text_clear_fn");
   text_clear(); return jerry_create_undefined(); }
@@ -673,6 +688,7 @@ static void module_native_init(jerry_value_t exports) {
   jerryxx_set_property_function(exports, MSTR_NATIVE_addSprite,     addSprite);
   jerryxx_set_property_function(exports, MSTR_NATIVE_text_add,      native_text_add_fn);
   jerryxx_set_property_function(exports, MSTR_NATIVE_text_clear,    native_text_clear_fn);
+  jerryxx_set_property_function(exports, MSTR_NATIVE_set_color,     native_set_color_fn);
 
   /* random background goodie */
   jerryxx_set_property_function(exports, MSTR_NATIVE_map_clear_deltas, native_map_clear_deltas_fn);

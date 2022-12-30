@@ -12,6 +12,7 @@ const {
 
   /* art */ setLegend, setBackground,
   /* text */ addText, clearText,
+  /* palette */ setColor,
 
   /*   spawn sprites */ setMap, addSprite,
   /* despawn sprites */ clearTile, /* sprite.remove() */
@@ -66,6 +67,10 @@ exports.addText = (str, opts={}) => {
 
 exports.clearText = () => native.text_clear();
 
+exports.setColor = (str, r, g, b) => {
+  console.log("engine.js:setColor");
+  native.set_color(str, r, g, b);
+};
 
 exports.setLegend = (...bitmaps) => {
   console.log("engine.js:setLegend");

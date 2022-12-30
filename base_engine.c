@@ -270,6 +270,10 @@ WASM_EXPORT void text_add(char *str, char palette_index, int x, int y) {
   }
 }
 
+WASM_EXPORT void set_color(char palette_index, int r, int g, int b) {
+  state->render->palette[char_to_palette_index(palette_index)] = color16(r, g, b);
+}
+
 WASM_EXPORT void text_clear(void) {
   __builtin_memset(state->text_char , 0, sizeof(state->text_char ));
   __builtin_memset(state->text_color, 0, sizeof(state->text_color));

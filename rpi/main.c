@@ -18,7 +18,7 @@
 #include "hardware/watchdog.h"
 #include "pico/util/queue.h"
 #include "pico/multicore.h"
-#include "jerry_mem.h"
+/* #include "jerry_mem.h" */
 
 #ifdef SPADE_AUDIO
 #include "audio.h"
@@ -29,27 +29,86 @@
 #define ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 char errorbuf[512] = "";
 
-#include "base_engine.c"
+/* #include "base_engine.c" */
 
-#include "jerryscript.h"
-#include "jerryxx.h"
+/* #include "jerryscript.h" */
+/* #include "jerryxx.h" */
 
 /* jumbo builds out of laziness */
-static void module_native_init(jerry_value_t exports);
-#include "js.h"
-#include "module_native.c"
+/* static void module_native_init(jerry_value_t exports); */
+/* #include "js.h" */
+/* #include "module_native.c" */
+
+#define PER_CHAR (255)
+
+#define SCREEN_SIZE_X (160)
+#define SCREEN_SIZE_Y (128)
+  /* typedef struct { uint8_t rgba[4]; } Color; */
+
+  /* #define color16(r, g, b) ((Color) { r, g, b, 255 }) */
+
+    static uint16_t color16(uint8_t r, uint8_t b, uint8_t g) {
+      r = (uint8_t)((float)((float)r / 255.0f) * 31.0f);
+      g = (uint8_t)((float)((float)g / 255.0f) * 31.0f);
+      b = (uint8_t)((float)((float)b / 255.0f) * 63.0f);
+
+      // return ((r & 0xf8) << 8) + ((g & 0xfc) << 3) + (b >> 3);
+      return ((r & 0b11111000) << 8) | ((g & 0b11111100) << 3) | (b >> 3);
+    }
+
+    typedef uint16_t Color;
+
+static void render_errorbuf(void) {
+  int y = 0;
+  int x = 0;
+  for (int i = 0; i < sizeof(errorbuf); i++) {
+    if (errorbuf[i] == '\0') break;
+    if (errorbuf[i] == '\n' || x >= (SCREEN_SIZE_X / 8)) {
+      y++;
+      x = 0;
+      if (errorbuf[i] == '\n') continue;
+    }
+    if (y >= (SCREEN_SIZE_Y / 8)) break;
+    /* state->text_color[y][x] = color16(255, 0, 0); */
+    /* state->text_char [y][x] = errorbuf[i]; */
+    x++;
+  }
+}
+typedef struct { int x, y, width, height, scale; } be_Rect;
+
+static void render_calc_bounds(be_Rect *rect) {
+  rect->width = SCREEN_SIZE_X;
+  rect->height = SCREEN_SIZE_Y;
+
+  rect->x = 0;
+  rect->y = 0;
+}
+
+
+static Color render_pixel(be_Rect *game, int x, int y) {
+  return color16(255,0,0);
+}
+static void render(void (*write_pixel)(int x, int y, Color c)) {
+  be_Rect rect = {0};
+  render_calc_bounds(&rect);
+
+  for (int x = 0; x < 160; x++)
+    for (int y = 0; y < 128; y++)
+      write_pixel(x, y, render_pixel(&rect, x, y));
+}
 
 /* permanent loop rendering errbuf */
 static void write_pixel(int x, int y, Color c);
 static void fatal_error() {
   while (1) {
-    text_clear();
+    /* text_clear(); */
     render_errorbuf();
     st7735_fill_start();
       render(write_pixel);
     st7735_fill_finish();
   }
 }
+
 
 #define HISTORY_LEN (64)
 typedef struct {
@@ -142,7 +201,7 @@ static int load_new_scripts(void) {
   return upl_stdin_read();
 }
 
-#ifdef SPADE_AUDIO
+#if 0 //def SPADE_AUDIO
 void piano_jerry_song_free(void *p) {
   /* it's straight up a jerry_value_t, not even a pointer to one */
   jerry_value_t jvt = (jerry_value_t)p;
@@ -171,8 +230,8 @@ int main() {
 
   st7735_init();
 
-  jerry_init (JERRY_INIT_MEM_STATS);
-  init(sprite_free_jerry_object); /* gosh i should namespace base engine */
+  /* jerry_init (JERRY_INIT_MEM_STATS); */
+  /* init(sprite_free_jerry_object); /\* gosh i should namespace base engine *\/ */
 
   while(!save_read()) {
     strcpy(errorbuf, "                    \n"
@@ -195,7 +254,7 @@ int main() {
       render(write_pixel);
     st7735_fill_finish();
 
-    load_new_scripts();
+    /* load_new_scripts(); */
   }
 
   multicore_launch_core1(core1_entry);
@@ -215,7 +274,7 @@ int main() {
                      "                    \n"
                      "                    \n"
                      "                    \n"
-                     "    PRESS ANY KEY   \n"
+                     "    PRESS ANYTHING  \n"
                      "       TO RUN       \n"
                      "                    \n"
                      "                    \n"
@@ -231,15 +290,15 @@ int main() {
     load_new_scripts();
   }
   memset(errorbuf, 0, sizeof(errorbuf));
-  text_clear();
+  /* text_clear(); */
 
   /* drain keypresses */
   while (multicore_fifo_rvalid()) multicore_fifo_pop_blocking();
 
   /* init js */
-  js_run(save_read(), strlen(save_read()));
+  /* js_run(save_read(), strlen(save_read())); */
 
-#ifdef SPADE_AUDIO
+#if 0 //def SPADE_AUDIO
   piano_init((PianoOpts) {
     .song_free = piano_jerry_song_free,
     .song_chars = piano_jerry_song_chars,
@@ -251,27 +310,27 @@ int main() {
   dbg("okay launching game loop");
   while(1) {
     /* input handling */
-    puts("please tell me it's not the fifo");
-    while (multicore_fifo_rvalid())
-      spade_call_press(multicore_fifo_pop_blocking());
+    /* puts("please tell me it's not the fifo"); */
+    /* while (multicore_fifo_rvalid()) */
+    /*   spade_call_press(multicore_fifo_pop_blocking()); */
 
     /* setTimeout/setInterval impl */
     absolute_time_t now = get_absolute_time();
     int elapsed = us_to_ms(absolute_time_diff_us(last, now));
     last = now;
     puts("frame?");
-    spade_call_frame(elapsed);
+    /* spade_call_frame(elapsed); */
 
-    puts("promises?");
-    js_promises();
+    /* puts("promises?"); */
+    /* js_promises(); */
 
 #if SPADE_AUDIO
     audio_try_push_samples();
 #endif
 
     /* upload new scripts */
-    puts("not load new scripts surely?");
-    if (load_new_scripts()) break;
+    /* puts("not load new scripts surely?"); */
+    /* if (load_new_scripts()) break; */
 
     /* render */
     puts("uhh rendering? lol");

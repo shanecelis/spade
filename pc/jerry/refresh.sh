@@ -1,7 +1,11 @@
-set -e
+set -xe
 
-cd ~/jerryscript_build
-rm -rf example-*
+JERRYSCRIPT_PARENT=${1-~/jerryscript_build}
+
+cd $JERRYSCRIPT_PARENT
+JERRYSCRIPT_PARENT="$(pwd)"; # Deals with relative directories.
+rm -rf example_build
+rm -rf example_install
 
 python3 jerryscript/tools/build.py \
   --builddir=$(pwd)/example_build \
@@ -14,9 +18,9 @@ python3 jerryscript/tools/build.py \
   --mem-stats=ON \
   --line-info=ON \
   --jerry-cmdline=OFF
-make -C $(pwd)/example_build install\
+make -C $(pwd)/example_build install
 
-cd ~/spade/pc/jerry
-cp -r ~/jerryscript_build/example_build/lib ./
-rm -rf include
-cp -r ~/jerryscript_build/example_install/include ./
+cd $JERRYSCRIPT_PARENT/spade/pc/jerry
+cp -r $JERRYSCRIPT_PARENT/example_build/lib ./
+# rm -rf include
+cp -r $JERRYSCRIPT_PARENT/example_install/include ./

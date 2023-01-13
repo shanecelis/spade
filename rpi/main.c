@@ -172,7 +172,7 @@ static void button_poll(void) {
 
 static void power_lights() {
   // left white light
-  const pin_num_0 = 28;
+  const uint pin_num_0 = 28;
   gpio_set_function(pin_num_0, GPIO_FUNC_PWM);
   uint slice_num_0 = pwm_gpio_to_slice_num(pin_num_0);
   pwm_set_enabled(slice_num_0, true);

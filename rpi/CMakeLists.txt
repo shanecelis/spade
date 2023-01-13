@@ -25,7 +25,10 @@ target_link_libraries(spade
   hardware_spi
   hardware_timer
   hardware_pwm
+  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
 )
+
+include_directories(pemsa/include)
 
 add_compile_definitions(PICO_HEAP_SIZE=16384)
 

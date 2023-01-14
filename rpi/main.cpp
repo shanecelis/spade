@@ -1,3 +1,4 @@
+extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,9 +26,16 @@
 #endif
 #include "ST7735_TFT.h"
 #include "upload.h"
+}
+#include "pemsa/pemsa.hpp"
+#include "spade_backends.hpp"
+#include "no_cart.hpp"
 
 #define ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 char errorbuf[512] = "";
+SpadeGraphicsBackend* graphics = nullptr;
+SpadeAudioBackend* audio = nullptr;
+Color borderColor = 0;
 
 /* #include "base_engine.c" */
 
@@ -43,20 +51,6 @@ char errorbuf[512] = "";
 
 #define SCREEN_SIZE_X (160)
 #define SCREEN_SIZE_Y (128)
-  /* typedef struct { uint8_t rgba[4]; } Color; */
-
-  /* #define color16(r, g, b) ((Color) { r, g, b, 255 }) */
-
-    static uint16_t color16(uint8_t r, uint8_t b, uint8_t g) {
-      r = (uint8_t)((float)((float)r / 255.0f) * 31.0f);
-      g = (uint8_t)((float)((float)g / 255.0f) * 31.0f);
-      b = (uint8_t)((float)((float)b / 255.0f) * 63.0f);
-
-      // return ((r & 0xf8) << 8) + ((g & 0xfc) << 3) + (b >> 3);
-      return ((r & 0b11111000) << 8) | ((g & 0b11111100) << 3) | (b >> 3);
-    }
-
-    typedef uint16_t Color;
 
 static void render_errorbuf(void) {
   int y = 0;
@@ -86,8 +80,14 @@ static void render_calc_bounds(be_Rect *rect) {
 
 
 static Color render_pixel(be_Rect *game, int x, int y) {
-  return color16(255,0,0);
+  if (x < 16 || x > 144) {
+    return borderColor;
+  } else {
+    x -= 16;
+    return graphics->getPixel(x, y);
+  }
 }
+
 static void render(void (*write_pixel)(int x, int y, Color c)) {
   be_Rect rect = {0};
   render_calc_bounds(&rect);
@@ -223,6 +223,10 @@ static void write_pixel(int x, int y, Color c) {
   st7735_fill_send(c);
 }
 
+static void pemsa_fill_sample_buf(int16_t *samples, int size) {
+  audio->fillSampleBuffer(samples, size);
+}
+
 int main() {
   power_lights();
 
@@ -233,29 +237,40 @@ int main() {
   /* jerry_init (JERRY_INIT_MEM_STATS); */
   /* init(sprite_free_jerry_object); /\* gosh i should namespace base engine *\/ */
 
-  while(!save_read()) {
-    strcpy(errorbuf, "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "    PLEASE UPLOAD   \n"
-                     "       A GAME       \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     " sprig.hackclub.dev \n");
-    render_errorbuf();
-    st7735_fill_start();
-      render(write_pixel);
-    st7735_fill_finish();
+  graphics = new SpadeGraphicsBackend();
+  audio = new SpadeAudioBackend();
+  SpadeInputBackend* input = new SpadeInputBackend();
+  bool running = true;
+  bool enableSplash = true;
+  borderColor = color16(255, 0, 0);
 
-    /* load_new_scripts(); */
-  }
+  PemsaEmulator emulator(graphics, audio, input, &running, enableSplash);
+
+  // emulator.reset();
+  //emulator.getCartridgeModule()->loadFromString("nocart", noCartPlaceholder, false);
+  // while(!save_read()) {
+  //   strcpy(errorbuf, "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "    PLEASE UPLOAD   \n"
+  //                    "       A GAME       \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    "                    \n"
+  //                    " sprig.hackclub.dev \n");
+  //   render_errorbuf();
+  //   st7735_fill_start();
+  //     render(write_pixel);
+  //   st7735_fill_finish();
+
+  //   /* load_new_scripts(); */
+  // }
 
   multicore_launch_core1(core1_entry);
 
@@ -266,6 +281,7 @@ int main() {
   sleep_ms(50);
   while (multicore_fifo_rvalid()) multicore_fifo_pop_blocking();
 
+  borderColor = color16(0, 255, 0);
   while(!multicore_fifo_rvalid()) {
     strcpy(errorbuf, "                    \n"
                      "                    \n"
@@ -298,14 +314,15 @@ int main() {
   /* init js */
   /* js_run(save_read(), strlen(save_read())); */
 
-#if 0 //def SPADE_AUDIO
-  piano_init((PianoOpts) {
-    .song_free = piano_jerry_song_free,
-    .song_chars = piano_jerry_song_chars,
-  });
+#ifdef SPADE_AUDIO
+  // piano_init((PianoOpts) {
+  //   .song_free = piano_jerry_song_free,
+  //   .song_chars = piano_jerry_song_chars,
+  // });
   audio_init();
 #endif
 
+  borderColor = color16(0, 0, 255);
   absolute_time_t last = get_absolute_time();
   dbg("okay launching game loop");
   while(1) {
@@ -319,13 +336,15 @@ int main() {
     int elapsed = us_to_ms(absolute_time_diff_us(last, now));
     last = now;
     puts("frame?");
+    graphics->fps = 1.0 / elapsed;
+    emulator.update(elapsed / 1000.0);
     /* spade_call_frame(elapsed); */
 
     /* puts("promises?"); */
     /* js_promises(); */
 
 #if SPADE_AUDIO
-    audio_try_push_samples();
+    audio_try_push_samples(pemsa_fill_sample_buf);
 #endif
 
     /* upload new scripts */
@@ -334,12 +353,14 @@ int main() {
 
     /* render */
     puts("uhh rendering? lol");
-    render_errorbuf();
+    // render_errorbuf();
+    emulator.render();
     st7735_fill_start();
       render(write_pixel);
     st7735_fill_finish();
   }
 
+  borderColor = color16(255, 255, 0);
   strcpy(errorbuf, "                    \n"
                    "                    \n"
                    "                    \n"

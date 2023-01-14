@@ -45,15 +45,16 @@ static struct audio_buffer_pool *audio_buffer_pool_init() {
 
 struct audio_buffer_pool *audio_bufpool;
 
+
 void audio_init(void) {
   audio_bufpool = audio_buffer_pool_init();
 }
 
-void audio_try_push_samples(void) {
+void audio_try_push_samples(void (*fill_sample_buf)(int16_t*, int)) {
   struct audio_buffer *buffer = take_audio_buffer(audio_bufpool, false);
   if (buffer == NULL) return;
 
-  piano_fill_sample_buf((int16_t *)buffer->buffer->bytes, buffer->max_sample_count);
+  fill_sample_buf((int16_t *)buffer->buffer->bytes, buffer->max_sample_count);
   buffer->sample_count = buffer->max_sample_count;
 
   /* send to PIO DMA */

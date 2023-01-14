@@ -1,4 +1,6 @@
+#ifndef __cplusplus
 float strtof(const char *restrict nptr, char **restrict endptr);
+#endif
 #include <stdint.h>
 
 /* gaps in your audio? increase this */

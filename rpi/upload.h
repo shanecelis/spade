@@ -17,7 +17,7 @@ static const char *save_read(void) {
   }
 
   /* add a page to get what's after the magic */
-  const char *save = flash_target_contents + FLASH_PAGE_SIZE;
+  const char *save = (char *) flash_target_contents + FLASH_PAGE_SIZE;
   return save;
 }
 
@@ -32,12 +32,12 @@ static struct {
   uint32_t len, len_i;
   char buf[256];
   int page;
-} upl_state = {0};
+} upl_state = {UplProg_StartSeq};
 
 static void upl_flush_buf(void) {
   uint32_t interrupts = save_and_disable_interrupts();
   flash_range_program(FLASH_TARGET_OFFSET + (upl_state.page++) * 256,
-                      (void *)upl_state.buf,
+                      (const uint8_t *)upl_state.buf,
                       256);
   restore_interrupts(interrupts);
   memset(upl_state.buf, 0, sizeof(upl_state.buf));
@@ -112,7 +112,7 @@ static int upl_stdin_read(void) {
           upl_flush_buf();
 
           uint32_t interrupts = save_and_disable_interrupts();
-          flash_range_program(FLASH_TARGET_OFFSET, (void *)SPRIG_MAGIC, FLASH_PAGE_SIZE);
+          flash_range_program(FLASH_TARGET_OFFSET, (const uint8_t *)SPRIG_MAGIC, FLASH_PAGE_SIZE);
           restore_interrupts(interrupts);
           
           // printf("read in %d chars\n", upl_state.len);

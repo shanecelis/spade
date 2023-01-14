@@ -25,12 +25,26 @@ target_link_libraries(spade
   hardware_spi
   hardware_timer
   hardware_pwm
-  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
 )
 
-include_directories(pemsa/include)
+add_compile_options(-fno-rtti)
+add_library(PemsaBackends rpi/spade_backends.cpp)
 
+target_link_libraries(PemsaBackends
+  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
+  )
+target_link_libraries(spade
+  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
+  ${CMAKE_SOURCE_DIR}/rpi/pemsa/libs/lua/libcustomlua.a
+  ${CMAKE_SOURCE_DIR}/rpi/pemsa/libs/fixmath/libfixmath.a
+  PemsaBackends
+  )
+
+include_directories(rpi/pemsa/include rpi/pemsa/libs/lua rpi/pemsa/libs/fixmath)
+
+add_compile_definitions(PICO)
 add_compile_definitions(PICO_HEAP_SIZE=16384)
+add_compile_options(-fpermissive)
 
 pico_enable_stdio_usb(spade 1)
 pico_enable_stdio_uart(spade 0)

@@ -14,7 +14,7 @@ if (SPADE_TARGET STREQUAL "rpi")
 endif()
 
 project(spade C CXX)
-add_executable(spade "${SPADE_TARGET}/main.c")
+add_executable(spade "${SPADE_TARGET}/main.cpp")
 include("${SPADE_TARGET}/CMakeLists.txt")
 
 # add_library(JerryXX jerryxx.c)

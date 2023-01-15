@@ -1,6 +1,7 @@
 pico_sdk_init()
 add_definitions(-DSPADE_EMBEDDED -DSPADE_AUDIO)
 
+add_subdirectory("rpi/pemsa")
 add_library(Audio rpi/audio.c)
 target_compile_definitions(Audio PRIVATE
         # compile time configuration of I2S
@@ -27,19 +28,19 @@ target_link_libraries(spade
   hardware_pwm
 )
 
+
 add_compile_options(-fno-rtti)
 add_library(PemsaBackends rpi/spade_backends.cpp)
 
 target_link_libraries(PemsaBackends
-  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
+  pemsa
   )
 target_link_libraries(spade
-  ${CMAKE_SOURCE_DIR}/rpi/pemsa/dist/libpemsa.a
-  ${CMAKE_SOURCE_DIR}/rpi/pemsa/libs/lua/libcustomlua.a
-  ${CMAKE_SOURCE_DIR}/rpi/pemsa/libs/fixmath/libfixmath.a
+  pemsa
   PemsaBackends
   )
 
+# include_directories(pemsa)
 include_directories(rpi/pemsa/include rpi/pemsa/libs/lua rpi/pemsa/libs/fixmath)
 
 add_compile_definitions(PICO)

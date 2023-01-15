@@ -30,11 +30,13 @@ extern "C" {
 #include "pemsa/pemsa.hpp"
 #include "spade_backends.hpp"
 #include "no_cart.hpp"
+#include "hello_world.hpp"
 
 #define ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 char errorbuf[512] = "";
 SpadeGraphicsBackend* graphics = nullptr;
 SpadeAudioBackend* audio = nullptr;
+SpadeInputBackend* input = nullptr;
 Color borderColor = 0;
 
 /* #include "base_engine.c" */
@@ -78,7 +80,6 @@ static void render_calc_bounds(be_Rect *rect) {
   rect->y = 0;
 }
 
-
 static Color render_pixel(be_Rect *game, int x, int y) {
   if (x < 16 || x > 144) {
     return borderColor;
@@ -115,6 +116,9 @@ typedef struct {
   uint8_t history[HISTORY_LEN/8];
   uint8_t last_state, ring_i;
 } ButtonState;
+
+// keys                 w   s   a   d   i   k   j   l
+   int pemsa_map[] = {  2,  3,  0,  1, -2,  4, -1,  5 };
 uint button_pins[] = {  5,  7,  6,  8, 12, 14, 13, 15 };
 static ButtonState button_states[ARR_LEN(button_pins)] = {0};
 
@@ -160,7 +164,7 @@ static void button_poll(void) {
       // spade_call_press(button_pins[i]);
 
       // queue_add_blocking(&button_queue, &(ButtonPress) { .pin = button_pins[i] });
-      if (!down) multicore_fifo_push_blocking(button_pins[i]);
+      if (!down) multicore_fifo_push_blocking(i);
 
       //      if (button_pins[i] == 8) map_move(map_get_first('p'),  1,  0);
       // else if (button_pins[i] == 6) map_move(map_get_first('p'), -1,  0);
@@ -194,11 +198,14 @@ static void core1_entry(void) {
   }
 }
 
-static void game_init(void) {
-}
-
 static int load_new_scripts(void) {
   return upl_stdin_read();
+}
+
+static void pemsa_call_press(int b) {
+  if (b < 0)
+    return;
+  input->callPress(pemsa_map[b]);
 }
 
 #if 0 //def SPADE_AUDIO
@@ -223,8 +230,9 @@ static void write_pixel(int x, int y, Color c) {
   st7735_fill_send(c);
 }
 
-static void pemsa_fill_sample_buf(int16_t *samples, int size) {
-  audio->fillSampleBuffer(samples, size);
+extern "C" void pemsa_fill_sample_buf(int16_t *samples, int size) {
+  if (audio)
+    audio->fillSampleBuffer(samples, size);
 }
 
 int main() {
@@ -239,15 +247,14 @@ int main() {
 
   graphics = new SpadeGraphicsBackend();
   audio = new SpadeAudioBackend();
-  SpadeInputBackend* input = new SpadeInputBackend();
+  input = new SpadeInputBackend();
   bool running = true;
   bool enableSplash = true;
   borderColor = color16(255, 0, 0);
 
   PemsaEmulator emulator(graphics, audio, input, &running, enableSplash);
 
-  // emulator.reset();
-  //emulator.getCartridgeModule()->loadFromString("nocart", noCartPlaceholder, false);
+
   // while(!save_read()) {
   //   strcpy(errorbuf, "                    \n"
   //                    "                    \n"
@@ -281,24 +288,23 @@ int main() {
   sleep_ms(50);
   while (multicore_fifo_rvalid()) multicore_fifo_pop_blocking();
 
-  borderColor = color16(0, 255, 0);
   while(!multicore_fifo_rvalid()) {
-    strcpy(errorbuf, "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "    PRESS ANYTHING  \n"
-                     "       TO RUN       \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     "                    \n"
-                     " sprig.hackclub.dev \n");
-    render_errorbuf();
+    // strcpy(errorbuf, "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "    PRESS ANYTHING  \n"
+    //                  "       TO RUN       \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  "                    \n"
+    //                  " sprig.hackclub.dev \n");
+    // render_errorbuf();
     st7735_fill_start();
       render(write_pixel);
     st7735_fill_finish();
@@ -311,6 +317,7 @@ int main() {
   /* drain keypresses */
   while (multicore_fifo_rvalid()) multicore_fifo_pop_blocking();
 
+
   /* init js */
   /* js_run(save_read(), strlen(save_read())); */
 
@@ -322,29 +329,46 @@ int main() {
   audio_init();
 #endif
 
+  if (
+    // false &&
+      // ! emulator.getCartridgeModule()->loadFromString("hellocart.p8", helloWorldCart, false)) {
+    ! emulator.getCartridgeModule()->loadFromString("nocart", noCartPlaceholder, false)) {
+    borderColor = color16(0, 255, 255);
+  } else {
+    borderColor = color16(0, 255, 0);
+  }
+  // emulator.reset();
+
   borderColor = color16(0, 0, 255);
   absolute_time_t last = get_absolute_time();
   dbg("okay launching game loop");
-  while(1) {
+  int color = 0;
+  while(running) {
+    borderColor = color16(color++, 0, 255);
     /* input handling */
     /* puts("please tell me it's not the fifo"); */
-    /* while (multicore_fifo_rvalid()) */
-    /*   spade_call_press(multicore_fifo_pop_blocking()); */
+    while (multicore_fifo_rvalid())
+      pemsa_call_press(multicore_fifo_pop_blocking());
 
     /* setTimeout/setInterval impl */
     absolute_time_t now = get_absolute_time();
     int elapsed = us_to_ms(absolute_time_diff_us(last, now));
     last = now;
     puts("frame?");
-    graphics->fps = 1.0 / elapsed;
-    emulator.update(elapsed / 1000.0);
+    double delta = elapsed * 1000.0;
+    graphics->fps = 1.0 / delta;
+    if (emulator.update(delta)) {
+      // Emulator stopped.
+      running = false;
+    }
     /* spade_call_frame(elapsed); */
 
     /* puts("promises?"); */
     /* js_promises(); */
 
+    emulator.render();
 #if SPADE_AUDIO
-    audio_try_push_samples(pemsa_fill_sample_buf);
+    // audio_try_push_samples(pemsa_fill_sample_buf);
 #endif
 
     /* upload new scripts */
@@ -354,7 +378,6 @@ int main() {
     /* render */
     puts("uhh rendering? lol");
     // render_errorbuf();
-    emulator.render();
     st7735_fill_start();
       render(write_pixel);
     st7735_fill_finish();

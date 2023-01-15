@@ -41,6 +41,11 @@ class SpadeInputBackend : public PemsaInputBackend {
         void reset() override;
 
         const char* getClipboardText() override;
+        void callPress(int button);
+    private:
+        int buttonState;
+        int lastButtonState;
+
 };
 class SpadeAudioBackend : public PemsaAudioBackend {
 

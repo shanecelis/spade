@@ -46,6 +46,7 @@ color16(255, 157, 12)
 };
 
 SpadeGraphicsBackend::SpadeGraphicsBackend() {
+    fps = 0;
 }
 
 SpadeGraphicsBackend::~SpadeGraphicsBackend() {
@@ -66,7 +67,7 @@ int SpadeGraphicsBackend::getFps() {
   */
 Color SpadeGraphicsBackend::getPixel(int x, int y) {
     uint8_t* ram = this->emulator->getMemoryModule()->ram;
-    int i = y + (x >> 1) * 64;
+    int i = y * 64 + (x >> 1);
     uint8_t val = ram[i + PEMSA_RAM_SCREEN];
     return palette[x & 1 == 0 ? val & 0x0f : val >> 4];
 }
@@ -82,23 +83,32 @@ SpadeInputBackend::~SpadeInputBackend()
 }
 
 
+void SpadeInputBackend::callPress(int button) {
+    this->buttonState |= 1 << button;
+}
+
+
 bool
 SpadeInputBackend::isButtonDown(int i, int p)
 {
-    return false;
+    if (i < 0 || i > PEMSA_BUTTON_COUNT - 1 || p < 0 || p > PEMSA_PLAYER_COUNT - 1) {
+        return false;
+    }
+    return this->buttonState & (1 << i);
 }
 
 
 bool
 SpadeInputBackend::isButtonPressed(int i, int p)
 {
-    return false;
+    return this->buttonState & (1 << i);
 }
 
 
 void
 SpadeInputBackend::update()
 {
+    this->lastButtonState = this->buttonState;
 }
 
 

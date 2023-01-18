@@ -13,7 +13,7 @@ typedef struct {
 } PianoOpts;
 
 void piano_init(PianoOpts);
-void piano_fill_sample_buf(int16_t *samples, int size);
+int piano_fill_sample_buf(int16_t *samples, int size);
 
 int  piano_queue_song(void *, double times);
 int  piano_unqueue_song(void *p);

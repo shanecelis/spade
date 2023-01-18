@@ -205,7 +205,7 @@ int32_t clamp(int32_t x, int32_t min, int32_t max) {
   return x;
 }
 
-void piano_fill_sample_buf(int16_t *samples, int size) {
+int piano_fill_sample_buf(int16_t *samples, int size) {
   /* fill buffer */
   for (int i = 0; i < size; i++) {
     int32_t sum = 0;
@@ -223,4 +223,5 @@ void piano_fill_sample_buf(int16_t *samples, int size) {
       samples[i] = 0;
     }
   }
+  return size;
 }

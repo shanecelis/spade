@@ -53,7 +53,7 @@ class SpadeAudioBackend : public PemsaAudioBackend {
         ~SpadeAudioBackend();
 
         void setupBuffer() override;
-        void fillSampleBuffer(int16_t *samples, int size);
+        int fillSampleBuffer(int16_t *samples, int size);
 };
 
 #endif // SPADE_GRAPHICS_BACKEND_H_

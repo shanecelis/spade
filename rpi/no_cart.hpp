@@ -19,15 +19,15 @@ function _draw()
 			pal(7,col)
 			spr(16+i, x, y)
 		end
- end
+    end
 
 	print("this is pemsa",
 	 37, 70, 14)
 	print("insert a cart",
 	 37, 80, 12)
 	spr(1, 64-4, 90) -- ♥
-    print("cpu " .. stat(1))
-    print("fps " .. stat(7))
+    print("cpu " .. stat(1), 37, 90)
+    print("fps " .. stat(7), 37, 100)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

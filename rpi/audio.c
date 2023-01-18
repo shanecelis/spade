@@ -19,8 +19,9 @@ static struct audio_buffer_pool *audio_buffer_pool_init() {
     .sample_stride = 2
   };
 
-  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 3,
-                                    SAMPLES_PER_BUFFER); // todo correct size
+  struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format,
+                                                                    3,
+                                                                    SAMPLES_PER_BUFFER); // todo correct size
   bool __unused ok;
   const struct audio_format *output_format;
 
@@ -50,12 +51,11 @@ void audio_init(void) {
   audio_bufpool = audio_buffer_pool_init();
 }
 
-void audio_try_push_samples(void (*fill_sample_buf)(int16_t*, int)) {
+void audio_try_push_samples(int (*fill_sample_buf)(int16_t*, int)) {
   struct audio_buffer *buffer = take_audio_buffer(audio_bufpool, false);
   if (buffer == NULL) return;
 
-  fill_sample_buf((int16_t *)buffer->buffer->bytes, buffer->max_sample_count);
-  buffer->sample_count = buffer->max_sample_count;
+  buffer->sample_count = fill_sample_buf((int16_t *)buffer->buffer->bytes, buffer->max_sample_count);
 
   /* send to PIO DMA */
   give_audio_buffer(audio_bufpool, buffer);

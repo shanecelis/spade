@@ -110,6 +110,12 @@ static void fatal_error() {
   }
 }
 
+static int pemsa_fill_sample_buf(int16_t *samples, int size) {
+  if (audio)
+    return audio->fillSampleBuffer(samples, size);
+  else
+    return 0;
+}
 
 #define HISTORY_LEN (64)
 typedef struct {
@@ -228,11 +234,6 @@ static void write_pixel(int x, int y, Color c) {
   (void *)x;
   (void *)y;
   st7735_fill_send(c);
-}
-
-extern "C" void pemsa_fill_sample_buf(int16_t *samples, int size) {
-  if (audio)
-    audio->fillSampleBuffer(samples, size);
 }
 
 int main() {

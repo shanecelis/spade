@@ -67,9 +67,10 @@ int SpadeGraphicsBackend::getFps() {
   */
 Color SpadeGraphicsBackend::getPixel(int x, int y) {
     uint8_t* ram = this->emulator->getMemoryModule()->ram;
-    int i = y * 64 + (x >> 1);
+    // y * 64 + x / 2
+    int i = (y << 6) | (x >> 1);
     uint8_t val = ram[i + PEMSA_RAM_SCREEN];
-    return palette[x & 1 == 0 ? val & 0x0f : val >> 4];
+    return palette[1 & x ? val >> 4 : val & 0x0f];
 }
 
 
@@ -171,10 +172,11 @@ SpadeAudioBackend::setupBuffer()
 {
 }
 
-void SpadeAudioBackend::fillSampleBuffer(int16_t *samples, int size) {
+int SpadeAudioBackend::fillSampleBuffer(int16_t *samples, int size) {
     PemsaAudioModule* audioModule = ((PemsaEmulator*) emulator)->getAudioModule();
 
     for (int i = 0; i < size; i++) {
         samples[i] = (int16_t) (audioModule->sample() * INT16_MAX);
     }
+    return size;
 }

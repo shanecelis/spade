@@ -1,15 +1,13 @@
 # pico-8 Emulator for Sprig
 
-This repo is derived from sprig's [spade](https://github.com/hackclub/spade) firmware and game engine. However, instead of hosting games using jerryscript, it's hosting pico-8 games using lua.
+This repo is derived from sprig's [spade](https://github.com/hackclub/spade) firmware and game engine. However, instead of hosting games using jerryscript, it's hosting pico-8 games using lua with a pico-8 emulator, [pemsa](https://github.com/shanecelis/pemsa).
 
 ## Building
 
 Prerequisites:
 
-- A working Python 3 environment.
 - The ability to run Bash scripts.
-- A C build environment, preferably Clang. on Windows, GC won't work and you must use Clang. make sure CMake and Make are both working.
-- *Optional:* entr installed. Only needed if you want to use jsdev.sh.
+- A C build environment, preferably Clang. On Windows, GCC won't work and you must use Clang. Make sure CMake and Make are both working.
 
 Set up your build environment. All folders need to be in your home directory, although they can be linked if you prefer.
 
@@ -55,10 +53,9 @@ cd rpi_build
 fswatch -o /Volumes/RPI-RP2 | xargs -I {} -n 4 cp spade.uf2 /Volumes/RPI-RP2
 ```
 
-
 ### PC Build
 
-The PC Build has not been kept up to date. (I may regret this.)
+The PC Build has not been kept up to date. But you can exercise the [pemsa pico-8 emulator](https://github.com/shanecelis/pemsa) using its [SDL example](https://github.com/egordorichev/pemsa-sdl).
 
 ## Troubleshooting
 
@@ -68,3 +65,17 @@ If you get an error about a missing Pico SDK, run the following and try again:
 export PICO_SDK_PATH=~/raspberrypi/pico-sdk
 export PICO_EXTRAS_PATH=~/raspberrypi/pico-extras
 ```
+
+## TODO
+
+* Get sound working
+
+It's commented out because it sounds horrible and slows down the rendering.
+
+* Add a filesystem
+
+pico-8 has a good means of selecting from multiple games. Games could be uploaded via serial interface as usual. 
+
+* Lua library could not load its math module
+
+Sprig would not work. Unclear why. I would have guessed anything but the math module.

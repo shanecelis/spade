@@ -1,3 +1,3 @@
-static char engine_script[] = 
-  #include "engine.js.cstring"
-;
+/* static char engine_script[] =  */
+/*   #include "engine.js.cstring" */
+/* ; */

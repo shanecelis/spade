@@ -29,7 +29,7 @@ target_link_libraries(spade
 )
 
 
-add_compile_options(-fno-rtti)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 add_library(PemsaBackends rpi/spade_backends.cpp)
 
 target_link_libraries(PemsaBackends

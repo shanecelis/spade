@@ -110,6 +110,7 @@ void
 SpadeInputBackend::update()
 {
     this->lastButtonState = this->buttonState;
+    this->buttonState = 0;
 }
 
 

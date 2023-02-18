@@ -66,6 +66,14 @@ export PICO_SDK_PATH=~/raspberrypi/pico-sdk
 export PICO_EXTRAS_PATH=~/raspberrypi/pico-extras
 ```
 
+### See debug output
+
+Use a program like minicom to see what's coming out of the serial port.
+
+``` sh
+minicom -D /dev/cu.usbmodem148444221
+```
+
 ## TODO
 
 * Get sound working

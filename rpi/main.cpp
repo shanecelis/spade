@@ -25,15 +25,18 @@ extern "C" {
 #include "audio.h"
 #endif
 #include "ST7735_TFT.h"
-#include "upload.h"
+// #include "upload.h"
 }
 #include "pemsa/pemsa.hpp"
 #include "spade_backends.hpp"
-#include "no_cart.hpp"
-#include "hello_world.hpp"
+// #include "no_cart.hpp"
+// #include "hello_world.hpp"
+#include "button_test.hpp"
+// This cart may be too big.
+// #include "zelda_pico_cart.hpp"
 
 #define ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
-char errorbuf[512] = "";
+// char errorbuf[512] = "";
 SpadeGraphicsBackend* graphics = nullptr;
 SpadeAudioBackend* audio = nullptr;
 SpadeInputBackend* input = nullptr;
@@ -55,20 +58,20 @@ Color borderColor = 0;
 #define SCREEN_SIZE_Y (128)
 
 static void render_errorbuf(void) {
-  int y = 0;
-  int x = 0;
-  for (int i = 0; i < sizeof(errorbuf); i++) {
-    if (errorbuf[i] == '\0') break;
-    if (errorbuf[i] == '\n' || x >= (SCREEN_SIZE_X / 8)) {
-      y++;
-      x = 0;
-      if (errorbuf[i] == '\n') continue;
-    }
-    if (y >= (SCREEN_SIZE_Y / 8)) break;
-    /* state->text_color[y][x] = color16(255, 0, 0); */
-    /* state->text_char [y][x] = errorbuf[i]; */
-    x++;
-  }
+  // int y = 0;
+  // int x = 0;
+  // for (int i = 0; i < sizeof(errorbuf); i++) {
+  //   if (errorbuf[i] == '\0') break;
+  //   if (errorbuf[i] == '\n' || x >= (SCREEN_SIZE_X / 8)) {
+  //     y++;
+  //     x = 0;
+  //     if (errorbuf[i] == '\n') continue;
+  //   }
+  //   if (y >= (SCREEN_SIZE_Y / 8)) break;
+  //   /* state->text_color[y][x] = color16(255, 0, 0); */
+  //   /* state->text_char [y][x] = errorbuf[i]; */
+  //   x++;
+  // }
 }
 typedef struct { int x, y, width, height, scale; } be_Rect;
 
@@ -81,6 +84,7 @@ static void render_calc_bounds(be_Rect *rect) {
 }
 
 static Color render_pixel(be_Rect *game, int x, int y) {
+  // return ((x / 5) % 2) == 0 ? color16(0,0,0) : color16(255,255,255);
   if (x < 16 || x > 144) {
     return borderColor;
   } else {
@@ -110,6 +114,7 @@ static void fatal_error() {
   }
 }
 
+
 static int pemsa_fill_sample_buf(int16_t *samples, int size) {
   if (audio)
     return audio->fillSampleBuffer(samples, size);
@@ -124,7 +129,7 @@ typedef struct {
 } ButtonState;
 
 // keys                 w   s   a   d   i   k   j   l
-   int pemsa_map[] = {  2,  3,  0,  1, -2,  4, -1,  5 };
+   int pemsa_map[] = {  2,  3,  0,  1,  6,  4, -1,  5 };
 uint button_pins[] = {  5,  7,  6,  8, 12, 14, 13, 15 };
 static ButtonState button_states[ARR_LEN(button_pins)] = {0};
 
@@ -178,6 +183,10 @@ static void button_poll(void) {
       // else if (button_pins[i] == 5) map_move(map_get_first('p'),  0, -1);
     }
   }
+
+#if SPADE_AUDIO
+    // audio_try_push_samples(pemsa_fill_sample_buf);
+#endif
 }
 
 static void power_lights() {
@@ -199,14 +208,15 @@ static void power_lights() {
 static void core1_entry(void) {
   button_init();
 
+  audio_init();
   while (1) {
     button_poll();
   }
 }
 
-static int load_new_scripts(void) {
-  return upl_stdin_read();
-}
+// static int load_new_scripts(void) {
+//   return upl_stdin_read();
+// }
 
 static void pemsa_call_press(int b) {
   if (b < 0)
@@ -310,9 +320,9 @@ int main() {
       render(write_pixel);
     st7735_fill_finish();
 
-    load_new_scripts();
+    // load_new_scripts();
   }
-  memset(errorbuf, 0, sizeof(errorbuf));
+  // memset(errorbuf, 0, sizeof(errorbuf));
   /* text_clear(); */
 
   /* drain keypresses */
@@ -327,13 +337,15 @@ int main() {
   //   .song_free = piano_jerry_song_free,
   //   .song_chars = piano_jerry_song_chars,
   // });
-  audio_init();
+  // audio_init();
 #endif
 
   if (
     // false &&
-      // ! emulator.getCartridgeModule()->loadFromString("hellocart.p8", helloWorldCart, false)) {
-    ! emulator.getCartridgeModule()->loadFromString("nocart", noCartPlaceholder, false)) {
+    // ! emulator.getCartridgeModule()->loadFromString("hellocart.p8", helloWorldCart, false)) {
+    // ! emulator.getCartridgeModule()->loadFromString("nocart", noCartPlaceholder, false)) {
+    ! emulator.getCartridgeModule()->loadFromString("buttontest", buttonTestCart, false)) {
+    // ! emulator.getCartridgeModule()->loadFromString("zelda-pico", zeldaPicoCart, false)) {
     borderColor = color16(0, 255, 255);
   } else {
     borderColor = color16(0, 255, 0);
@@ -368,9 +380,9 @@ int main() {
     /* js_promises(); */
 
     emulator.render();
-#if SPADE_AUDIO
-    // audio_try_push_samples(pemsa_fill_sample_buf);
-#endif
+// #if SPADE_AUDIO
+//     audio_try_push_samples(pemsa_fill_sample_buf);
+// #endif
 
     /* upload new scripts */
     /* puts("not load new scripts surely?"); */
@@ -385,21 +397,21 @@ int main() {
   }
 
   borderColor = color16(255, 255, 0);
-  strcpy(errorbuf, "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "    PLEASE REBOOT   \n"
-                   "     YOUR SPRIG     \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   "                    \n"
-                   " sprig.hackclub.dev \n");
+  // strcpy(errorbuf, "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "    PLEASE REBOOT   \n"
+  //                  "     YOUR SPRIG     \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  "                    \n"
+  //                  " sprig.hackclub.dev \n");
 
   render_errorbuf();
   st7735_fill_start();

@@ -18,9 +18,9 @@ add_executable(spade "${SPADE_TARGET}/main.cpp")
 include("${SPADE_TARGET}/CMakeLists.txt")
 
 # add_library(JerryXX jerryxx.c)
-add_library(Piano piano.c)
-target_link_libraries(spade
-  Piano
-)
+# add_library(Piano piano.c)
+# target_link_libraries(spade
+#   Piano
+# )
 # include_directories(${SPADE_TARGET}/jerry/include)
 include_directories(./)
